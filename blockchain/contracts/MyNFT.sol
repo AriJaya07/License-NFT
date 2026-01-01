@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -16,15 +15,19 @@ contract MyNFT is ERC721URIStorage, Ownable {
         tokenCounter = 0;
     }
 
-    // Mint a new NFT
+    /**
+     * @dev Mint a new NFT
+     * @param to Address to mint the NFT to
+     * @param tokenURI IPFS hash or URI for the NFT metadata
+     */
     function mint(address to, string memory tokenURI) public onlyOwner returns (uint256) {
         require(to != address(0), "Cannot mint to zero address");
         require(bytes(tokenURI).length > 0, "Token URI cannot be empty");
-        
-        uint256 newItemId = tokenCounter;
-        _safeMint(msg.sender, newItemId);
-        _setTokenURI(newItemId, tokenURI);
 
+        uint256 newItemId = tokenCounter;
+        _safeMint(to, newItemId);
+        _setTokenURI(newItemId, tokenURI);
+        
         tokenCounter++;
 
         emit NFTMinted(to, newItemId, tokenURI);
@@ -32,7 +35,11 @@ contract MyNFT is ERC721URIStorage, Ownable {
         return newItemId;
     }
 
-    // Batch mint multiple NFTs
+    /**
+     * @dev Batch mint multiple NFTs
+     * @param to Address to mint the NFTs to
+     * @param tokenURIs Array of IPFS hashes or URIs
+     */
     function batchMint(address to, string[] memory tokenURIs) public onlyOwner returns (uint256[] memory) {
         require(to != address(0), "Cannot mint to zero address");
         require(tokenURIs.length > 0, "Must mint at least one NFT");
@@ -42,11 +49,11 @@ contract MyNFT is ERC721URIStorage, Ownable {
 
         for (uint256 i = 0; i < tokenURIs.length; i++) {
             require(bytes(tokenURIs[i]).length > 0, "Token URI cannot be empty");
-
+            
             uint256 newItemId = tokenCounter;
             _safeMint(to, newItemId);
             _setTokenURI(newItemId, tokenURIs[i]);
-
+            
             tokenIds[i] = newItemId;
             tokenCounter++;
 
@@ -56,24 +63,32 @@ contract MyNFT is ERC721URIStorage, Ownable {
         return tokenIds;
     }
 
-    // Returns the base URI for computing tokenURI
+    /**
+     * @dev Returns the base URI for computing tokenURI
+     */
     function _baseURI() internal pure override returns (string memory) {
-         return "https://gateway.pinata.cloud/ipfs/";
+        return "https://gateway.pinata.cloud/ipfs/";
     }
 
-    // Get total supply of minted NFTs
+    /**
+     * @dev Get total supply of minted NFTs
+     */
     function totalSupply() public view returns (uint256) {
         return tokenCounter;
     }
 
-    // Check if a token exists
+    /**
+     * @dev Check if a token exists
+     */
     function exists(uint256 tokenId) public view returns (bool) {
         return tokenId < tokenCounter;
     }
 
-    // Burn an NFT (only owner of the NFT can burn)
+    /**
+     * @dev Burn an NFT (only owner of the NFT can burn)
+     */
     function burn(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Only owner can burn");
+        require(ownerOf(tokenId) == msg.sender, "Only token owner can burn");
         _burn(tokenId);
     }
 }

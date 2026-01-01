@@ -1,3 +1,4 @@
+// test/NFTMarketplace.test.js
 import { expect } from "chai";
 import hre from "hardhat";
 
@@ -22,8 +23,8 @@ describe("NFTMarketplace", function () {
     marketplace = await NFTMarketplace.deploy();
     await marketplace.waitForDeployment();
 
-    // Mint an NFT to seller
-    await nft.mint(seller.address, "QmTestHash");
+    // Owner mints an NFT to seller (owner is the contract owner who can mint)
+    await nft.connect(owner).mint(seller.address, "QmTestHash");
   });
 
   describe("Deployment", function () {
@@ -40,10 +41,10 @@ describe("NFTMarketplace", function () {
     it("Should list NFT successfully", async function () {
       const price = hre.ethers.parseEther("1");
       
-      // Approve marketplace
+      // Seller approves marketplace (seller is the NFT owner)
       await nft.connect(seller).approve(await marketplace.getAddress(), 0);
       
-      // List NFT
+      // Seller lists NFT
       await expect(
         marketplace.connect(seller).listNFT(await nft.getAddress(), 0, price)
       )
@@ -67,6 +68,7 @@ describe("NFTMarketplace", function () {
     it("Should fail if marketplace not approved", async function () {
       const price = hre.ethers.parseEther("1");
       
+      // Don't approve, just try to list
       await expect(
         marketplace.connect(seller).listNFT(await nft.getAddress(), 0, price)
       ).to.be.revertedWith("Marketplace not approved");
@@ -248,7 +250,7 @@ describe("NFTMarketplace", function () {
     it("Should withdraw accumulated fees", async function () {
       const price = hre.ethers.parseEther("1");
       
-      // List and buy NFT
+      // List and buy NFT to accumulate fees
       await nft.connect(seller).approve(await marketplace.getAddress(), 0);
       await marketplace.connect(seller).listNFT(await nft.getAddress(), 0, price);
       await marketplace.connect(buyer).buyNFT(1, { value: price });
