@@ -1,11 +1,11 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Marketplace from "@/src/components/Marketplace";
 
 export default function Home() {
   return (
     <main>
-      <ConnectButton />
+      <Marketplace />
     </main>
   );
 }
