@@ -3,7 +3,7 @@ import {
   Listing,
   MarketplaceAbi,
   MyNFTAbi,
-} from "@/src/contracts/contracts";
+} from "@/src/utils/contracts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useMemo, useState } from "react";
 import { Address, formatEther, isAddress, parseEther } from "viem";

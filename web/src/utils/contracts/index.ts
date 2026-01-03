@@ -102,17 +102,54 @@ export const MarketplaceAbi = [
           { name: "seller", type: "address" },
           { name: "price", type: "uint256" },
           { name: "active", type: "bool" },
+          { name: "tokenURI", type: "string" }, 
         ],
       },
+    ],
+  },
+  {
+    type: "function",
+    name: "getAllListings",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        components: [
+          { name: "nftContract", type: "address" },
+          { name: "tokenId", type: "uint256" },
+          { name: "seller", type: "address" },
+          { name: "price", type: "uint256" },
+          { name: "active", type: "bool" },
+          { name: "tokenURI", type: "string" }, 
+        ],
+      },
+    ],
+  },
+  {
+    type: "event",
+    name: "NFTListed",
+    inputs: [
+      { name: "listingId", type: "uint256", indexed: true },
+      { name: "nftContract", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "seller", type: "address" },
+      { name: "price", type: "uint256" },
+      { name: "tokenURI", type: "string" },  // Emit tokenURI for front-end display
     ],
   },
 ] as const;
 
 
 export type Listing = {
-    nftContract: Address;
-    tokenId: bigint;
-    seller: Address;
-    price: bigint;
-    active: boolean;
-}
+  nftContract: Address;
+  tokenId: bigint;
+  seller: Address;
+  price: bigint;
+  active: boolean;
+  name: string;           // Name of the NFT (e.g., "Awesome NFT")
+  description: string;    // Description of the NFT
+  image: string;          // URL to the NFT image (IPFS URL or HTTP link)
+  tokenURI: string;       // The token URI pointing to the metadata
+};
