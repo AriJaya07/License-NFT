@@ -20,10 +20,10 @@ export const useMyNFTRead = () => {
 export const useListMarketplaceRead = () => {
   type ListingWithId = Omit<Listing, "price" | "tokenId"> & {
     tokenId: string;
-    price: string;
+    price: bigint;
   };
 
-  const [listings, setListings] = useState<ListingWithId[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
 
   const { data, isLoading, isError, refetch } = useReadContract({
     address: ADDRESSES.marketplace,
@@ -33,15 +33,16 @@ export const useListMarketplaceRead = () => {
 
   useEffect(() => {
     if (data) {
-      console.log(data, "DATATA")
+      console.log(data, "DATASS")
       const listingsData = data.map((listing: any) => ({
         nftContract: listing.nftContract,
         tokenId: listing.tokenId.toString(), // Ensure it's a string for React
         seller: listing.seller,
         price: formatEther(listing.price), // Convert price to ETH
         active: listing.active,
+        tokenURI: listing.tokenURI,
       }));
-      // setListings(listingsData);
+      setListings(listingsData);
     }
   }, [data]);
 
