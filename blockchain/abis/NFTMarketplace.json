@@ -105,6 +105,12 @@
         "internalType": "uint256",
         "name": "price",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tokenURI",
+        "type": "string"
       }
     ],
     "name": "NFTListed",
@@ -241,6 +247,11 @@
             "internalType": "bool",
             "name": "active",
             "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "tokenURI",
+            "type": "string"
           }
         ],
         "internalType": "struct NFTMarketplace.Listing[]",
@@ -287,6 +298,11 @@
             "internalType": "bool",
             "name": "active",
             "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "tokenURI",
+            "type": "string"
           }
         ],
         "internalType": "struct NFTMarketplace.Listing",
@@ -384,6 +400,11 @@
         "internalType": "bool",
         "name": "active",
         "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "tokenURI",
+        "type": "string"
       }
     ],
     "stateMutability": "view",

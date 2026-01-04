@@ -4,8 +4,12 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
+/**
+ * Gas-optimized marketplace:
+ * - DOES NOT store tokenURI (string) in marketplace storage (expensive)
+ * - Frontend should read tokenURI from the ERC721 contract via tokenURI(tokenId)
+ */
 contract NFTMarketplace is ReentrancyGuard, Ownable {
     struct Listing {
         address nftContract;
@@ -13,7 +17,6 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         address seller;
         uint256 price;
         bool active;
-        string tokenURI;
     }
 
     // Marketplace fee (2.5% = 250 basis points)
@@ -26,17 +29,16 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
     // Mapping from listing ID to Listing
     mapping(uint256 => Listing) public listings;
 
-    // Mapping from NFT contract => token ID => listing ID
+    // Mapping from NFT contract => token ID => listing ID (0 means not listed)
     mapping(address => mapping(uint256 => uint256)) public nftToListing;
 
-    // Events
+    // Events (removed tokenURI to reduce event data; FE can query tokenURI from NFT contract)
     event NFTListed(
         uint256 indexed listingId,
         address indexed nftContract,
         uint256 indexed tokenId,
         address seller,
-        uint256 price,
-        string tokenURI
+        uint256 price
     );
 
     event NFTSold(
@@ -88,28 +90,17 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
 
         uint256 listingId = _listingIdCounter++;
 
-        // fetch the tokenURI from the ERC721 contract
-        string memory tokenURI = IERC721Metadata(nftContract).tokenURI(tokenId);
-
         listings[listingId] = Listing({
             nftContract: nftContract,
             tokenId: tokenId,
             seller: msg.sender,
             price: price,
-            active: true,
-            tokenURI: tokenURI
+            active: true
         });
 
         nftToListing[nftContract][tokenId] = listingId;
 
-        emit NFTListed(
-            listingId,
-            nftContract,
-            tokenId,
-            msg.sender,
-            price,
-            tokenURI
-        );
+        emit NFTListed(listingId, nftContract, tokenId, msg.sender, price);
 
         return listingId;
     }
@@ -131,7 +122,7 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
             "Seller no longer owns NFT"
         );
 
-        // Mark as inactive
+        // Mark as inactive and clear reverse lookup
         listing.active = false;
         nftToListing[listing.nftContract][listing.tokenId] = 0;
 
@@ -233,6 +224,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
 
     /**
      * @dev Get all listings
+     * Note: returns inactive listings too (same behavior as your original).
+     * For FE, you can filter by active==true.
      */
     function getAllListings() external view returns (Listing[] memory) {
         uint256 count = _listingIdCounter - 1;

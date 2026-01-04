@@ -18,16 +18,16 @@ describe("NFTMarketplace", function () {
     nft = await MyNFT.deploy();
     await nft.waitForDeployment();
 
-    // Deploy Marketplace contract
+    // Deploy Marketplace contract (UPDATED version: no tokenURI in Listing)
     const NFTMarketplace = await hre.ethers.getContractFactory(
       "NFTMarketplace"
     );
     marketplace = await NFTMarketplace.deploy();
     await marketplace.waitForDeployment();
 
-    // Owner mints an NFT to seller (owner is the contract owner who can mint)
+    // Owner mints NFTs to seller (owner is the contract owner who can mint)
     await nft.connect(owner).mint(seller.address, "QmTestHash1");
-    await nft.connect(owner).mint(seller.address, "QmTestHast2")
+    await nft.connect(owner).mint(seller.address, "QmTestHash2");
   });
 
   describe("Deployment", function () {
@@ -52,15 +52,17 @@ describe("NFTMarketplace", function () {
         marketplace.connect(seller).listNFT(await nft.getAddress(), 0, price)
       )
         .to.emit(marketplace, "NFTListed")
-        .withArgs(1, await nft.getAddress(), 0, seller.address, price, await nft.tokenURI(0));
+        .withArgs(1, await nft.getAddress(), 0, seller.address, price);
 
       const listing = await marketplace.getListing(1);
       expect(listing.seller).to.equal(seller.address);
       expect(listing.price).to.equal(price);
       expect(listing.active).to.equal(true);
+      expect(listing.nftContract).to.equal(await nft.getAddress());
+      expect(listing.tokenId).to.equal(0);
     });
 
-    it("should list NFT with getAllListings", async function () {
+    it("should list NFTs and return them in getAllListings", async function () {
       const price1 = hre.ethers.parseEther("1");
       const price2 = hre.ethers.parseEther("2");
 
@@ -76,21 +78,20 @@ describe("NFTMarketplace", function () {
         .connect(seller)
         .listNFT(await nft.getAddress(), 1, price2);
 
-      // Fetch all listings using getAllListings
       const listings = await marketplace.getAllListings();
-
-      // Ensure both listings are returned
       expect(listings.length).to.equal(2);
 
-      // Verify details for the first listing
       expect(listings[0].nftContract).to.equal(await nft.getAddress());
-      expect(listings[0].tokenId.toString()).to.equal("0");
-      expect(listings[0].price.toString()).to.equal(price1.toString());
+      expect(listings[0].tokenId).to.equal(0);
+      expect(listings[0].price).to.equal(price1);
+      expect(listings[0].seller).to.equal(seller.address);
+      expect(listings[0].active).to.equal(true);
 
-      // Verify details for the second listing
       expect(listings[1].nftContract).to.equal(await nft.getAddress());
-      expect(listings[1].tokenId.toString()).to.equal("1");
-      expect(listings[1].price.toString()).to.equal(price2.toString());
+      expect(listings[1].tokenId).to.equal(1);
+      expect(listings[1].price).to.equal(price2);
+      expect(listings[1].seller).to.equal(seller.address);
+      expect(listings[1].active).to.equal(true);
     });
 
     it("Should fail if not the owner", async function () {
@@ -104,7 +105,6 @@ describe("NFTMarketplace", function () {
     it("Should fail if marketplace not approved", async function () {
       const price = hre.ethers.parseEther("1");
 
-      // Don't approve, just try to list
       await expect(
         marketplace.connect(seller).listNFT(await nft.getAddress(), 0, price)
       ).to.be.revertedWith("Marketplace not approved");
@@ -152,7 +152,7 @@ describe("NFTMarketplace", function () {
           0,
           seller.address,
           buyer.address,
-          price,
+          price
         );
 
       expect(await nft.ownerOf(0)).to.equal(buyer.address);
@@ -230,10 +230,9 @@ describe("NFTMarketplace", function () {
     });
 
     it("Should allow marketplace owner to cancel", async function () {
-      await expect(marketplace.connect(owner).cancelListing(1)).to.emit(
-        marketplace,
-        "ListingCancelled"
-      );
+      await expect(marketplace.connect(owner).cancelListing(1))
+        .to.emit(marketplace, "ListingCancelled")
+        .withArgs(1, await nft.getAddress(), 0);
     });
   });
 
