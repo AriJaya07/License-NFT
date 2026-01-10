@@ -89,6 +89,13 @@ export const MarketplaceAbi = [
   },
   {
     type: "function",
+    name: "getMarketplaceFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
     name: "getListing",
     stateMutability: "view",
     inputs: [{ name: "listingId", type: "uint256" }],
@@ -102,7 +109,7 @@ export const MarketplaceAbi = [
           { name: "seller", type: "address" },
           { name: "price", type: "uint256" },
           { name: "active", type: "bool" },
-          { name: "tokenURI", type: "string" }, 
+          { name: "tokenURI", type: "string" },
         ],
       },
     ],
@@ -122,7 +129,7 @@ export const MarketplaceAbi = [
           { name: "seller", type: "address" },
           { name: "price", type: "uint256" },
           { name: "active", type: "bool" },
-          { name: "tokenURI", type: "string" }, 
+          { name: "tokenURI", type: "string" },
         ],
       },
     ],
@@ -136,11 +143,10 @@ export const MarketplaceAbi = [
       { name: "tokenId", type: "uint256", indexed: true },
       { name: "seller", type: "address" },
       { name: "price", type: "uint256" },
-      { name: "tokenURI", type: "string" },  // Emit tokenURI for front-end display
+      { name: "tokenURI", type: "string" }, // Emit tokenURI for front-end display
     ],
   },
 ] as const;
-
 
 export type Listing = {
   nftContract: Address;
@@ -148,8 +154,8 @@ export type Listing = {
   seller: Address;
   price: bigint;
   active: boolean;
-  name: string;           // Name of the NFT (e.g., "Awesome NFT")
-  description: string;    // Description of the NFT
-  image: string;          // URL to the NFT image (IPFS URL or HTTP link)
-  tokenURI: string;       // The token URI pointing to the metadata
+  name: string; // Name of the NFT (e.g., "Awesome NFT")
+  description: string; // Description of the NFT
+  image: string; // URL to the NFT image (IPFS URL or HTTP link)
+  tokenURI: string; // The token URI pointing to the metadata
 };

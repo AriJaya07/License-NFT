@@ -7,7 +7,7 @@ import { useAccount, useConnect, useDisconnect } from "wagmi"; // Import useConn
 import { RolePopup } from "@/src/components/RolePopup";
 
 // Put this in .env.local as NEXT_PUBLIC_ADMIN_WALLET=0x...
-const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET ?? "").toLowerCase();
+const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET ?? "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266").toLowerCase();
 
 export default function Home() {
   const { data: totalSupply } = useMyNFTRead();

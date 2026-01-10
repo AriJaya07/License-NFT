@@ -1,6 +1,11 @@
-"use client"
+"use client";
 
-import { ADDRESSES, Listing, MarketplaceAbi, MyNFTAbi } from "@/src/utils/contracts";
+import {
+  ADDRESSES,
+  Listing,
+  MarketplaceAbi,
+  MyNFTAbi,
+} from "@/src/utils/contracts";
 import { useEffect, useState } from "react";
 import { formatEther } from "viem";
 import { useReadContract } from "wagmi";
@@ -33,7 +38,7 @@ export const useListMarketplaceRead = () => {
 
   useEffect(() => {
     if (data) {
-      console.log(data, "DATASS")
+      console.log(data, "DATASS");
       const listingsData = data.map((listing: any) => ({
         nftContract: listing.nftContract,
         tokenId: listing.tokenId.toString(), // Ensure it's a string for React
@@ -64,5 +69,20 @@ export const useDetailMarketplaceRead = ({ listingId }: { listingId: any }) => {
 
   return {
     data,
+  };
+};
+
+export const useMarketplaceFee = () => {
+  const { data, isLoading, isError, refetch } = useReadContract({
+    address: ADDRESSES.marketplace,
+    abi: MarketplaceAbi,
+    functionName: "getMarketplaceFee", // or 'getMarketplaceFee' if your contract uses that
+  });
+
+  return {
+    data,
+    isLoading,
+    isError,
+    refetch,
   };
 };
