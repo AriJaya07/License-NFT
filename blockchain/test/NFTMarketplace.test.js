@@ -38,6 +38,11 @@ describe("NFTMarketplace", function () {
     it("Should set initial marketplace fee to 2.5%", async function () {
       expect(await marketplace.marketplaceFee()).to.equal(250);
     });
+
+    it("Should return marketplace fee via getMarketplaceFee", async function () {
+      const fee = await marketplace.getMarketplaceFee();
+      expect(fee).to.equal(250);
+    });
   });
 
   describe("Listing NFTs", function () {
@@ -273,6 +278,11 @@ describe("NFTMarketplace", function () {
   });
 
   describe("Marketplace Fee Management", function () {
+    it("Should return initial marketplace fee via getMarketplaceFee", async function () {
+      const fee = await marketplace.getMarketplaceFee();
+      expect(fee).to.equal(250); // 2.5%
+    });
+
     it("Should update marketplace fee", async function () {
       const newFee = 500; // 5%
 
@@ -281,6 +291,15 @@ describe("NFTMarketplace", function () {
         .withArgs(250, newFee);
 
       expect(await marketplace.marketplaceFee()).to.equal(newFee);
+    });
+
+    it("Should return updated fee via getMarketplaceFee after update", async function () {
+      const newFee = 500; // 5%
+
+      await marketplace.updateMarketplaceFee(newFee);
+
+      const fee = await marketplace.getMarketplaceFee();
+      expect(fee).to.equal(newFee);
     });
 
     it("Should fail if fee too high", async function () {
@@ -294,6 +313,28 @@ describe("NFTMarketplace", function () {
     it("Should fail if not owner", async function () {
       await expect(marketplace.connect(seller).updateMarketplaceFee(500)).to.be
         .reverted;
+    });
+
+    it("Should allow anyone to read marketplace fee", async function () {
+      // Anyone should be able to call getMarketplaceFee
+      const feeFromSeller = await marketplace
+        .connect(seller)
+        .getMarketplaceFee();
+      const feeFromBuyer = await marketplace.connect(buyer).getMarketplaceFee();
+      const feeFromAddr1 = await marketplace.connect(addr1).getMarketplaceFee();
+
+      expect(feeFromSeller).to.equal(250);
+      expect(feeFromBuyer).to.equal(250);
+      expect(feeFromAddr1).to.equal(250);
+    });
+
+    it("Should return correct fee percentage calculation", async function () {
+      const fee = await marketplace.getMarketplaceFee();
+      const FEE_DENOMINATOR = await marketplace.FEE_DENOMINATOR();
+
+      // Calculate percentage: (250 / 10000) * 100 = 2.5%
+      const percentage = (Number(fee) / Number(FEE_DENOMINATOR)) * 100;
+      expect(percentage).to.equal(2.5);
     });
   });
 

@@ -203,6 +203,14 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
     }
 
     /**
+     * @dev Get marketplace fee
+     * @return Current marketplace fee in basis points (250 = 2.5%)
+     */
+    function getMarketplaceFee() external view returns (uint256) {
+        return marketplaceFee;
+    }
+
+    /**
      * @dev Withdraw accumulated fees (only owner)
      */
     function withdrawFees() external onlyOwner {
