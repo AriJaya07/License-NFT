@@ -7,7 +7,6 @@ import {
   MyNFTAbi,
 } from "@/src/utils/contracts";
 import { useEffect, useState } from "react";
-import { formatEther } from "viem";
 import { useReadContract } from "wagmi";
 
 export const useMyNFTRead = () => {
@@ -23,11 +22,6 @@ export const useMyNFTRead = () => {
 };
 
 export const useListMarketplaceRead = () => {
-  type ListingWithId = Omit<Listing, "price" | "tokenId"> & {
-    tokenId: string;
-    price: bigint;
-  };
-
   const [listings, setListings] = useState<any[]>([]);
 
   const { data, isLoading, isError, refetch } = useReadContract({
@@ -38,15 +32,19 @@ export const useListMarketplaceRead = () => {
 
   useEffect(() => {
     if (data) {
-      console.log(data, "DATASS");
+      console.log("Raw data from contract:", data);
+
+      // Map the data according to the actual Listing struct from your contract
+      // Listing struct: { nftContract, tokenId, seller, price, active }
       const listingsData = data.map((listing: any) => ({
         nftContract: listing.nftContract,
-        tokenId: listing.tokenId.toString(), // Ensure it's a string for React
+        tokenId: listing.tokenId, // Keep as bigint
         seller: listing.seller,
-        price: formatEther(listing.price), // Convert price to ETH
+        price: listing.price, // Keep as bigint, format in UI
         active: listing.active,
-        tokenURI: listing.tokenURI,
+        // tokenURI is NOT in the contract - must be fetched separately
       }));
+
       setListings(listingsData);
     }
   }, [data]);
@@ -60,7 +58,7 @@ export const useListMarketplaceRead = () => {
 };
 
 export const useDetailMarketplaceRead = ({ listingId }: { listingId: any }) => {
-  const { data } = useReadContract({
+  const { data, isLoading, isError } = useReadContract({
     address: ADDRESSES.marketplace,
     abi: MarketplaceAbi,
     functionName: "getListing",
@@ -69,6 +67,8 @@ export const useDetailMarketplaceRead = ({ listingId }: { listingId: any }) => {
 
   return {
     data,
+    isLoading,
+    isError,
   };
 };
 
@@ -76,7 +76,7 @@ export const useMarketplaceFee = () => {
   const { data, isLoading, isError, refetch } = useReadContract({
     address: ADDRESSES.marketplace,
     abi: MarketplaceAbi,
-    functionName: "getMarketplaceFee", // or 'getMarketplaceFee' if your contract uses that
+    functionName: "getMarketplaceFee",
   });
 
   return {
@@ -84,5 +84,27 @@ export const useMarketplaceFee = () => {
     isLoading,
     isError,
     refetch,
+  };
+};
+
+// NEW HOOK: Fetch tokenURI from the NFT contract
+export const useNFTTokenURI = ({
+  nftContract,
+  tokenId,
+}: {
+  nftContract: `0x${string}`;
+  tokenId: bigint;
+}) => {
+  const { data, isLoading, isError } = useReadContract({
+    address: nftContract,
+    abi: MyNFTAbi,
+    functionName: "tokenURI",
+    args: [tokenId],
+  });
+
+  return {
+    tokenURI: data as string | undefined,
+    isLoading,
+    isError,
   };
 };

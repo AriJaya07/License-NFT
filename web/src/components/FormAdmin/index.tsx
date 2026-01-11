@@ -99,7 +99,7 @@ export default function FormAdmin() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
                 <input
-                  className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 outline-none transition
+                  className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 outline-none transition text-black
                     ${
                       to.length === 0
                         ? "border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
@@ -139,7 +139,7 @@ export default function FormAdmin() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
                 <input
-                  className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 outline-none transition"
+                  className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 outline-none transition text-black"
                   placeholder="ipfs://... or https://..."
                   value={uri}
                   onChange={(e) => setUri(e.target.value)}

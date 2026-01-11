@@ -4,6 +4,8 @@ import { useListMarketplaceRead } from "@/src/hooks/useReadContract";
 import Link from "next/link";
 import { formatEther } from "viem";
 import { useState, useEffect, useMemo } from "react";
+import { useReadContract } from "wagmi";
+import { MyNFTAbi } from "@/src/utils/contracts";
 import {
   ImagePlus,
   RefreshCw,
@@ -17,59 +19,78 @@ import {
 
 export default function MarketplacePage() {
   const { listings, isLoading, isError, refetch } = useListMarketplaceRead();
-
-  const [images, setImages] = useState<{ [tokenId: number]: string }>({});
+  const [images, setImages] = useState<{ [tokenId: string]: string }>({});
   const [query, setQuery] = useState("");
   const [showActiveOnly, setShowActiveOnly] = useState(true);
   const [sort, setSort] = useState<"new" | "price_low" | "price_high">("new");
 
-  // Fetch images if the tokenURI points to a metadata file
+  // Fetch tokenURI for each listing
   useEffect(() => {
     if (listings.length > 0) {
       listings.forEach((listing) => {
-        const tokenURI = listing?.tokenURI;
-        if (!tokenURI) return;
+        const tokenIdStr = listing.tokenId.toString();
 
-        // avoid refetch if already set
-        if (images[Number(listing.tokenId)]) return;
+        // Skip if already fetched
+        if (images[tokenIdStr]) return;
 
-        // If tokenURI is a JSON file (metadata), we need to fetch it and extract the image URL
-        if (tokenURI && tokenURI.includes("ipfs://")) {
-          const metadataUrl = tokenURI.replace(
-            "ipfs://",
-            "https://gateway.pinata.cloud/ipfs/"
-          );
+        // Fetch tokenURI from the NFT contract
+        fetch("/api/get-token-uri", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nftContract: listing.nftContract,
+            tokenId: tokenIdStr,
+          }),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            if (result.tokenURI) {
+              const uri = result.tokenURI;
 
-          fetch(metadataUrl)
-            .then((response) => response.json())
-            .then((metadata) => {
-              if (metadata?.image) {
-                const img = String(metadata.image);
-                const finalImg = img.startsWith("ipfs://")
-                  ? img.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
-                  : img;
+              // If it's metadata JSON (IPFS), fetch it
+              if (uri.includes("ipfs://") || uri.includes(".json")) {
+                const metadataUrl = uri.replace(
+                  "ipfs://",
+                  "https://gateway.pinata.cloud/ipfs/"
+                );
 
-                setImages((prevImages) => ({
-                  ...prevImages,
-                  [Number(listing.tokenId)]: finalImg,
+                fetch(metadataUrl)
+                  .then((response) => response.json())
+                  .then((metadata) => {
+                    if (metadata?.image) {
+                      const img = String(metadata.image);
+                      const finalImg = img.startsWith("ipfs://")
+                        ? img.replace(
+                            "ipfs://",
+                            "https://gateway.pinata.cloud/ipfs/"
+                          )
+                        : img;
+
+                      setImages((prev) => ({
+                        ...prev,
+                        [tokenIdStr]: finalImg,
+                      }));
+                    }
+                  })
+                  .catch((error) => {
+                    console.error("Failed to fetch metadata:", error);
+                  });
+              } else {
+                // Direct image URL
+                const finalUri = uri.startsWith("ipfs://")
+                  ? uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
+                  : uri;
+
+                setImages((prev) => ({
+                  ...prev,
+                  [tokenIdStr]: finalUri,
                 }));
               }
-            })
-            .catch((error) => {
-              console.error("Failed to fetch metadata:", error);
-            });
-        } else {
-          // If tokenURI is already an image/http, store it as direct image
-          const direct = String(tokenURI);
-          const finalDirect = direct.startsWith("ipfs://")
-            ? direct.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
-            : direct;
-
-          setImages((prevImages) => ({
-            ...prevImages,
-            [Number(listing.tokenId)]: finalDirect,
-          }));
-        }
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to fetch tokenURI:", error);
+          });
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,7 +98,6 @@ export default function MarketplacePage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-
     let data = [...listings];
 
     if (showActiveOnly) data = data.filter((l) => !!l.active);
@@ -102,12 +122,12 @@ export default function MarketplacePage() {
     return data;
   }, [listings, query, showActiveOnly, sort]);
 
-  // Display loading state (match admin theme)
+  // Display loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
         <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-8 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           <div>
             <p className="text-lg font-semibold text-gray-900">
               Loading listings…
@@ -133,8 +153,9 @@ export default function MarketplacePage() {
                 Failed to load listings
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                Please try again. If it keeps failing, check your RPC / contract
-                config.
+                Please check: <br />
+                • Contract address is correct <br />
+                • Network/RPC is working <br />• Contract is deployed
               </p>
             </div>
             <button
@@ -158,14 +179,13 @@ export default function MarketplacePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 NFT Marketplace
               </h2>
               <p className="text-gray-600 mt-1">
                 Browse listed NFTs. Filter, search, and open details.
               </p>
             </div>
-
             <button
               type="button"
               onClick={() => refetch()}
@@ -192,7 +212,7 @@ export default function MarketplacePage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search by tokenId or seller address…"
-                    className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition bg-white"
+                    className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white text-black"
                   />
                 </div>
               </div>
@@ -204,7 +224,7 @@ export default function MarketplacePage() {
                   onClick={() => setShowActiveOnly((v) => !v)}
                   className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition ${
                     showActiveOnly
-                      ? "bg-gradient-to-r from-primary-500 to-purple-600 text-white border-transparent shadow-lg"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent shadow-lg"
                       : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
                   }`}
                 >
@@ -225,7 +245,7 @@ export default function MarketplacePage() {
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value as any)}
-                    className="w-full appearance-none pl-10 pr-10 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition bg-white"
+                    className="w-full appearance-none pl-10 pr-10 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white text-black"
                   >
                     <option value="new">Newest</option>
                     <option value="price_low">Price: Low → High</option>
@@ -251,7 +271,6 @@ export default function MarketplacePage() {
                 </span>{" "}
                 listings
               </div>
-
               {query || !showActiveOnly || sort !== "new" ? (
                 <button
                   type="button"
@@ -260,7 +279,7 @@ export default function MarketplacePage() {
                     setShowActiveOnly(true);
                     setSort("new");
                   }}
-                  className="text-sm font-semibold text-primary-700 hover:text-primary-800 underline"
+                  className="text-sm font-semibold text-indigo-700 hover:text-indigo-800 underline"
                 >
                   Reset filters
                 </button>
@@ -272,8 +291,8 @@ export default function MarketplacePage() {
         {/* Empty state */}
         {filtered.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-10 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-100 to-purple-100 mx-auto flex items-center justify-center mb-4">
-              <ImagePlus className="text-primary-600" size={36} />
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 mx-auto flex items-center justify-center mb-4">
+              <ImagePlus className="text-indigo-600" size={36} />
             </div>
             <p className="text-xl font-bold text-gray-900">No listings found</p>
             <p className="text-sm text-gray-600 mt-2">
@@ -283,7 +302,7 @@ export default function MarketplacePage() {
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition"
               >
                 <RefreshCw size={18} />
                 Refresh
@@ -305,34 +324,39 @@ export default function MarketplacePage() {
           /* Listings Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((listing: any) => {
-              // Format price from Wei to ETH (keep your logic)
+              // Format price from Wei to ETH
               const formattedPrice = formatEther(listing?.price);
 
-              // Use fetched metadata image first
-              const img =
-                images[Number(listing.tokenId)] ||
-                (typeof listing?.tokenURI === "string"
-                  ? listing.tokenURI.replace(
-                      "ipfs://",
-                      "https://gateway.pinata.cloud/ipfs/"
-                    )
-                  : "");
+              // Use fetched metadata image
+              const img = images[listing.tokenId.toString()] || "";
+
+              const tokenIdStr = listing.tokenId.toString();
+              const seller = String(listing?.seller || "");
+              const nftContract = String(listing?.nftContract || "");
+              const shortAddr =
+                seller && seller.length > 10
+                  ? `${seller.slice(0, 6)}...${seller.slice(-4)}`
+                  : seller || "—";
+
+              const contractShort =
+                nftContract && nftContract.length > 10
+                  ? `${nftContract.slice(0, 6)}...${nftContract.slice(-4)}`
+                  : nftContract || "—";
 
               return (
                 <Link
-                  key={listing.tokenId}
-                  href={`/listing/${listing.tokenId}`}
+                  key={tokenIdStr}
+                  href={`/listing/${tokenIdStr}`}
                   className="group"
                 >
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-2xl transition-all overflow-hidden">
                     {/* Image */}
                     <div className="relative w-full aspect-square bg-gradient-to-br from-gray-100 to-gray-200">
                       {img ? (
-                        // use img tag to avoid next/image domain config issues
                         <img
                           src={img}
-                          alt={`NFT #${listing.tokenId}`}
-                          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                          alt={`NFT #${tokenIdStr}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                         />
                       ) : (
@@ -346,29 +370,16 @@ export default function MarketplacePage() {
                         <span
                           className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur ${
                             listing.active
-                              ? "bg-green-50/90 text-green-800 border-green-200"
-                              : "bg-red-50/90 text-red-800 border-red-200"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : "bg-red-50 text-red-700 border-red-200"
                           }`}
                         >
                           {listing.active ? (
-                            <>
-                              <CheckCircle size={14} />
-                              Active
-                            </>
+                            <CheckCircle size={14} />
                           ) : (
-                            <>
-                              <XCircle size={14} />
-                              Inactive
-                            </>
+                            <XCircle size={14} />
                           )}
-                        </span>
-                      </div>
-
-                      {/* Token badge */}
-                      <div className="absolute bottom-3 left-3">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/90 border border-gray-200 text-gray-800">
-                          <Tag size={14} />
-                          Token #{listing.tokenId}
+                          {listing.active ? "Active" : "Inactive"}
                         </span>
                       </div>
                     </div>
@@ -377,37 +388,46 @@ export default function MarketplacePage() {
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-lg font-bold text-gray-900 leading-tight">
-                            NFT #{listing.tokenId}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Listed by{" "}
-                            <span className="font-semibold text-primary-700">
-                              {String(listing.seller).slice(0, 6)}...
-                              {String(listing.seller).slice(-4)}
-                            </span>
+                          <p className="text-sm text-gray-500">Token</p>
+                          <p className="text-xl font-extrabold text-gray-900">
+                            #{tokenIdStr}
                           </p>
                         </div>
 
-                        {/* Price chip */}
-                        <div className="shrink-0 text-right">
-                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-gradient-to-r from-primary-50 to-purple-50 border border-primary-200">
-                            <Wallet size={16} className="text-primary-700" />
-                            <span className="text-sm font-bold text-gray-900">
-                              {formattedPrice} ETH
-                            </span>
-                          </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500">Price</p>
+                          <p className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            {formattedPrice} ETH
+                          </p>
                         </div>
                       </div>
 
-                      {/* Footer CTA */}
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          Click to view details
-                        </span>
-                        <span className="text-sm font-semibold text-primary-700 group-hover:text-primary-800">
-                          Open →
-                        </span>
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Wallet size={16} className="text-gray-400" />
+                          <span className="font-semibold text-gray-800">
+                            Seller:
+                          </span>
+                          <span className="font-mono">{shortAddr}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Tag size={16} className="text-gray-400" />
+                          <span className="font-semibold text-gray-800">
+                            Contract:
+                          </span>
+                          <span className="font-mono">{contractShort}</span>
+                        </div>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="mt-5">
+                        <div className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg group-hover:shadow-xl transition">
+                          View Listing
+                          <span className="opacity-80 group-hover:opacity-100 transition">
+                            →
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

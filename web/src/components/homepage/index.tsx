@@ -24,7 +24,7 @@ export default function Homepage({
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-black overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-10"></div>
         <div className="absolute inset-0">
           <div className="absolute top-20 left-20 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -41,7 +41,7 @@ export default function Homepage({
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-xl md:text-5xl font-bold mb-6 leading-tight text-white">
               Discover, Collect, and Sell
               <span className="block bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
                 Extraordinary NFTs
@@ -57,7 +57,7 @@ export default function Homepage({
               <Link href="/marketplace">
                 <Button
                   size="lg"
-                  className="bg-white text-primary-700 hover:bg-gray-100"
+                  className="bg-white text-primary-700 hover:bg-gray-500 !w-full"
                 >
                   <Palette size={20} /> Explore NFTs <ArrowRight size={20} />
                 </Button>
@@ -66,7 +66,7 @@ export default function Homepage({
                 size="lg"
                 variant="outline"
                 onClick={setIsCreateNFT}
-                className="border-white text-white hover:bg-white hover:text-primary-700"
+                className="border-white text-white hover:bg-gray-500 hover:text-primary-700"
               >
                 <Zap size={20} /> Create NFT
               </Button>
@@ -75,18 +75,18 @@ export default function Homepage({
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
               <div className="text-center">
-                <p className="text-4xl font-bold mb-2">
+                <p className="md:text-4xl text-2xl font-bold mb-2 text-white">
                   {totalSupply?.toString() || "0"}
                 </p>
-                <p className="text-gray-200">Total NFTs</p>
+                <p className="text-gray-200 font-normal">Total NFTs</p>
               </div>
               <div className="text-center">
-                <p className="text-4xl font-bold mb-2">2.5%</p>
-                <p className="text-gray-200">Marketplace Fee</p>
+                <p className="md:text-4xl text-2xl font-bold mb-2 text-white">2.5%</p>
+                <p className="text-gray-200 font-normal">Marketplace Fee</p>
               </div>
               <div className="text-center">
-                <p className="text-4xl font-bold mb-2">100%</p>
-                <p className="text-gray-200">Secure</p>
+                <p className="md:text-4xl text-2xl font-bold mb-2 text-white">100%</p>
+                <p className="text-gray-200 font-normal">Secure</p>
               </div>
             </div>
           </div>
@@ -108,9 +108,9 @@ export default function Homepage({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card hover className="p-8 text-center">
               <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Wallet className="text-primary-600" size={32} />
+                <Wallet className="text-gray-600" size={32} />
               </div>
-              <h3 className="text-xl font-bold mb-4">Set up your wallet</h3>
+              <h3 className="text-xl font-bold mb-4 text-black">Set up your wallet</h3>
               <p className="text-gray-600">
                 Once you've set up your wallet of choice, connect it by clicking
                 the wallet icon in the top right corner.
@@ -121,7 +121,7 @@ export default function Homepage({
               <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Palette className="text-green-600" size={32} />
               </div>
-              <h3 className="text-xl font-bold mb-4">Create your NFT</h3>
+              <h3 className="text-xl font-bold mb-4 text-black">Create your NFT</h3>
               <p className="text-gray-600">
                 Upload your work, add a title and description, and customize
                 your NFTs with properties and stats.
@@ -132,7 +132,7 @@ export default function Homepage({
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Tag className="text-purple-600" size={32} />
               </div>
-              <h3 className="text-xl font-bold mb-4">List them for sale</h3>
+              <h3 className="text-xl font-bold mb-4 text-black">List them for sale</h3>
               <p className="text-gray-600">
                 Choose between auctions, fixed-price listings, and
                 declining-price listings. You choose how you want to sell your

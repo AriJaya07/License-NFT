@@ -37,7 +37,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
       className={`
         flex items-center justify-center gap-2
-        rounded-xl font-medium transition-all
+        rounded-xl font-medium transition-all cursor-pointer
         ${sizeClasses}
         ${variantClasses[variant]}
         ${loading ? "opacity-70 cursor-not-allowed" : ""}

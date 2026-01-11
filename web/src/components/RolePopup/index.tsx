@@ -96,53 +96,47 @@ export const RolePopup: React.FC<RolePopupProps> = ({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-3 top-3 rounded-full p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="absolute right-3 top-3 rounded-full p-2 text-zinc-500 hover:text-zinc-700 focus:outline-none cursor-pointer"
         >
           ✕
         </button>
 
-        <h2
-          id="role-popup-title"
-          className="text-xl font-semibold text-zinc-900"
-        >
-          Choose your role
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Admin access requires the authorized wallet.
-        </p>
+        <div className="">
+          <h2
+            id="role-popup-title"
+            className="text-xl font-semibold text-zinc-900"
+          >
+            Choose your role
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Admin access requires the authorized wallet.
+          </p>
 
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
+          {error && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-row md:gap-5 gap-3">
+            <Button
+              type="button"
+              size="lg"
+              onClick={goAdmin}
+              className="w-full !bg-blue-600 !text-white hover:!bg-blue-700 !font-bold"
+            >
+              Admin
+            </Button>
+
+            <Button
+              type="button"
+              size="lg"
+              onClick={goUser}
+              className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 !font-bold"
+            >
+              User
+            </Button>
           </div>
-        )}
-
-        <div className="mt-6 grid gap-3">
-          <Button
-            type="button"
-            size="lg"
-            onClick={goAdmin}
-            className="w-full bg-blue-600 text-black hover:bg-blue-700"
-          >
-            Continue as Admin
-          </Button>
-
-          <Button
-            type="button"
-            size="lg"
-            onClick={goUser}
-            className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-          >
-            Continue as User
-          </Button>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-1 text-sm text-zinc-500 hover:text-zinc-700"
-          >
-            Cancel
-          </button>
         </div>
       </div>
     </div>
