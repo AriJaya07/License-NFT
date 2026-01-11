@@ -5,11 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/**
- * Gas-optimized marketplace:
- * - DOES NOT store tokenURI (string) in marketplace storage (expensive)
- * - Frontend should read tokenURI from the ERC721 contract via tokenURI(tokenId)
- */
 contract NFTMarketplace is ReentrancyGuard, Ownable {
     struct Listing {
         address nftContract;
@@ -19,20 +14,14 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         bool active;
     }
 
-    // Marketplace fee (2.5% = 250 basis points)
     uint256 public marketplaceFee = 250;
     uint256 public constant FEE_DENOMINATOR = 10000;
 
-    // Listing ID counter
     uint256 private _listingIdCounter;
 
-    // Mapping from listing ID to Listing
     mapping(uint256 => Listing) public listings;
-
-    // Mapping from NFT contract => token ID => listing ID (0 means not listed)
     mapping(address => mapping(uint256 => uint256)) public nftToListing;
 
-    // Events (removed tokenURI to reduce event data; FE can query tokenURI from NFT contract)
     event NFTListed(
         uint256 indexed listingId,
         address indexed nftContract,
@@ -68,9 +57,15 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         _listingIdCounter = 1;
     }
 
-    /**
-     * @dev List an NFT for sale
-     */
+    // Function to approve marketplace to transfer a specific NFT
+    function approveMarketplace(address nftContract, uint256 tokenId) external {
+        require(
+            IERC721(nftContract).ownerOf(tokenId) == msg.sender,
+            "Not the owner"
+        );
+        IERC721(nftContract).approve(address(this), tokenId); // Approve the marketplace to transfer the token
+    }
+
     function listNFT(
         address nftContract,
         uint256 tokenId,
@@ -82,9 +77,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
             "Not the owner"
         );
         require(
-            IERC721(nftContract).isApprovedForAll(msg.sender, address(this)) ||
-                IERC721(nftContract).getApproved(tokenId) == address(this),
-            "Marketplace not approved"
+            IERC721(nftContract).getApproved(tokenId) == address(this), // Ensure marketplace is approved for this token
+            "Marketplace not approved for this token"
         );
         require(nftToListing[nftContract][tokenId] == 0, "NFT already listed");
 
@@ -105,9 +99,6 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         return listingId;
     }
 
-    /**
-     * @dev Buy an NFT from the marketplace
-     */
     function buyNFT(uint256 listingId) external payable nonReentrant {
         Listing storage listing = listings[listingId];
 
@@ -115,29 +106,24 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         require(msg.value == listing.price, "Incorrect payment amount");
         require(msg.sender != listing.seller, "Cannot buy your own NFT");
 
-        // Verify seller still owns the NFT
         require(
             IERC721(listing.nftContract).ownerOf(listing.tokenId) ==
                 listing.seller,
             "Seller no longer owns NFT"
         );
 
-        // Mark as inactive and clear reverse lookup
         listing.active = false;
         nftToListing[listing.nftContract][listing.tokenId] = 0;
 
-        // Calculate fees
         uint256 fee = (listing.price * marketplaceFee) / FEE_DENOMINATOR;
         uint256 sellerAmount = listing.price - fee;
 
-        // Transfer NFT to buyer
         IERC721(listing.nftContract).safeTransferFrom(
             listing.seller,
             msg.sender,
             listing.tokenId
         );
 
-        // Transfer payment to seller
         (bool sellerSuccess, ) = payable(listing.seller).call{
             value: sellerAmount
         }("");
@@ -153,9 +139,6 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         );
     }
 
-    /**
-     * @dev Cancel a listing
-     */
     function cancelListing(uint256 listingId) external nonReentrant {
         Listing storage listing = listings[listingId];
 
@@ -171,9 +154,6 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit ListingCancelled(listingId, listing.nftContract, listing.tokenId);
     }
 
-    /**
-     * @dev Update listing price
-     */
     function updateListingPrice(
         uint256 listingId,
         uint256 newPrice
@@ -190,11 +170,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit ListingPriceUpdated(listingId, oldPrice, newPrice);
     }
 
-    /**
-     * @dev Update marketplace fee (only owner)
-     */
     function updateMarketplaceFee(uint256 newFee) external onlyOwner {
-        require(newFee <= 1000, "Fee too high"); // Max 10%
+        require(newFee <= 1000, "Fee too high");
 
         uint256 oldFee = marketplaceFee;
         marketplaceFee = newFee;
@@ -202,17 +179,10 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit MarketplaceFeeUpdated(oldFee, newFee);
     }
 
-    /**
-     * @dev Get marketplace fee
-     * @return Current marketplace fee in basis points (250 = 2.5%)
-     */
     function getMarketplaceFee() external view returns (uint256) {
         return marketplaceFee;
     }
 
-    /**
-     * @dev Withdraw accumulated fees (only owner)
-     */
     function withdrawFees() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No fees to withdraw");
@@ -221,20 +191,12 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         require(success, "Withdrawal failed");
     }
 
-    /**
-     * @dev Get listing details
-     */
     function getListing(
         uint256 listingId
     ) external view returns (Listing memory) {
         return listings[listingId];
     }
 
-    /**
-     * @dev Get all listings
-     * Note: returns inactive listings too (same behavior as your original).
-     * For FE, you can filter by active==true.
-     */
     function getAllListings() external view returns (Listing[] memory) {
         uint256 count = _listingIdCounter - 1;
         Listing[] memory items = new Listing[](count);
@@ -246,9 +208,6 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         return items;
     }
 
-    /**
-     * @dev Check if NFT is listed
-     */
     function isNFTListed(
         address nftContract,
         uint256 tokenId
