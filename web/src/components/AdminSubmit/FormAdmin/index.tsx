@@ -5,7 +5,14 @@ import { useState } from "react";
 import { Address, isAddress } from "viem";
 import { useWriteContract } from "wagmi";
 import toast, { Toaster } from "react-hot-toast";
-import { Shield, Wallet, Link2, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Shield,
+  Wallet,
+  Link2,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function FormAdmin() {
   const { writeContractAsync } = useWriteContract();
@@ -29,12 +36,16 @@ export default function FormAdmin() {
         args: [to as Address, uri],
       });
 
-      toast.success("Mint sent! Check your wallet / explorer.", { id: loadingToast });
+      toast.success("Mint sent! Check your wallet / explorer.", {
+        id: loadingToast,
+      });
       setTo("");
       setUri("");
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.shortMessage || e?.message || "Mint failed", { id: loadingToast });
+      toast.error(e?.shortMessage || e?.message || "Mint failed", {
+        id: loadingToast,
+      });
     } finally {
       setIsMinting(false);
     }
@@ -80,7 +91,8 @@ export default function FormAdmin() {
               <div className="flex-1">
                 <p className="font-bold text-gray-900">Mint Details</p>
                 <p className="text-sm text-gray-600">
-                  Enter the receiver address and the metadata URI (ipfs:// or https://).
+                  Enter the receiver address and the metadata URI (ipfs:// or
+                  https://).
                 </p>
               </div>
             </div>
@@ -147,7 +159,8 @@ export default function FormAdmin() {
               </div>
 
               <p className="mt-2 text-xs text-gray-500">
-                Tip: Use metadata JSON URI (example: <span className="font-semibold">ipfs://Qm...</span>)
+                Tip: Use metadata JSON URI (example:{" "}
+                <span className="font-semibold">ipfs://Qm...</span>)
               </p>
             </div>
 
@@ -202,7 +215,8 @@ export default function FormAdmin() {
             <div>
               <p className="font-semibold text-amber-900">Admin only</p>
               <p className="text-sm text-amber-800">
-                Make sure you’re connected with an admin wallet and on the correct network.
+                Make sure you’re connected with an admin wallet and on the
+                correct network.
               </p>
             </div>
           </div>

@@ -1,11 +1,11 @@
 "use client";
 
-import Marketplace from "@/src/components/Marketplace";
+import MarketplaceTest from "@/src/components/MarketplaceTest";
 
 export default function MintPage() {
   return (
     <div className="max-w-md">
-      <Marketplace />
+      <MarketplaceTest />
     </div>
   );
 }

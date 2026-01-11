@@ -20,7 +20,7 @@ function toBigIntSafe(v: string): bigint {
   return BigInt(n);
 }
 
-export default function Marketplace() {
+export default function MarketplaceTest() {
   const { address, isConnected } = useAccount();
   const { writeContractAsync } = useWriteContract();
 

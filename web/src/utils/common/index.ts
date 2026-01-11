@@ -65,6 +65,24 @@ export function formatPrice(
   return `${formatted} ${symbol}`;
 }
 
+export const IPFS_GATEWAY = "https://gateway.pinata.cloud/ipfs/";
+
+export const normalizeIpfs = (uri: string) =>
+  uri.startsWith("ipfs://") ? uri.replace("ipfs://", IPFS_GATEWAY) : uri;
+
+export const truncateAddress = (address: string) => {
+  return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
+};
+
+export const copyAddress = async (walletAddress: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(walletAddress);
+    return true;
+  } catch (error) {
+    console.error("Failed to copy:", error);
+    return false;
+  }
+};
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
