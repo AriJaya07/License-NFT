@@ -1,15 +1,15 @@
 // src/app/admin/page.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import toast, { Toaster } from 'react-hot-toast';
-import emailjs from '@emailjs/browser';
-import { Button } from '@/src/components/UI/Button';
-import Input from '@/src/components/UI/Input';
-import { Card } from '@/src/components/UI/Card';
+import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
+import emailjs from "@emailjs/browser";
+import { Button } from "@/src/components/UI/Button";
+import { Input } from "@/src/components/UI/Form";
+import { Card } from "@/src/components/UI/Card";
 
 import {
   Upload,
@@ -29,11 +29,11 @@ import {
   User as UserIcon,
   Clock,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useMarketplaceFee, useMyNFTRead } from '@/src/hooks/useReadContract';
-import { useNFT } from '@/src/hooks/useNFT';
-import { uploadImageToPinata, uploadMetadataToPinata } from '@/src/hooks/ipfs';
+import { useMarketplaceFee, useMyNFTRead } from "@/src/hooks/useReadContract";
+import { useNFT } from "@/src/hooks/useNFT";
+import { uploadImageToPinata, uploadMetadataToPinata } from "@/src/hooks/ipfs";
 
 interface Attribute {
   trait_type: string;
@@ -48,13 +48,14 @@ interface PendingSubmission {
   description: string;
   imageUrl: string;
   attributes: Attribute[];
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   submittedAt: Date;
   termsAccepted: boolean;
 }
 
 // Add this to your environment variables
-const ADMIN_ADDRESSES = process.env.NEXT_PUBLIC_ADMIN_ADDRESSES?.split(',') || [];
+const ADMIN_ADDRESSES =
+  process.env.NEXT_PUBLIC_ADMIN_ADDRESSES?.split(",") || [];
 
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
@@ -69,16 +70,16 @@ export default function AdminPage() {
   );
 
   // Form state
-  const [activeTab, setActiveTab] = useState<'mint' | 'submissions'>('mint');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [description, setDescription] = useState('');
+  const [activeTab, setActiveTab] = useState<"mint" | "submissions">("mint");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [currentAttribute, setCurrentAttribute] = useState({
-    trait_type: '',
-    value: '',
+    trait_type: "",
+    value: "",
   });
   const [uploading, setUploading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -86,12 +87,14 @@ export default function AdminPage() {
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Pending submissions (in production, this would come from a database)
-  const [pendingSubmissions, setPendingSubmissions] = useState<PendingSubmission[]>([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState<
+    PendingSubmission[]
+  >([]);
 
   // EmailJS configuration
-  const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || '';
-  const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || '';
-  const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '';
+  const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "";
+  const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "";
+  const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "";
 
   // Initialize EmailJS
   useEffect(() => {
@@ -106,7 +109,7 @@ export default function AdminPage() {
     if (file) {
       // Check file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Image size must be less than 10MB');
+        toast.error("Image size must be less than 10MB");
         return;
       }
 
@@ -123,7 +126,7 @@ export default function AdminPage() {
   const addAttribute = () => {
     if (currentAttribute.trait_type && currentAttribute.value) {
       setAttributes([...attributes, currentAttribute]);
-      setCurrentAttribute({ trait_type: '', value: '' });
+      setCurrentAttribute({ trait_type: "", value: "" });
     }
   };
 
@@ -135,24 +138,24 @@ export default function AdminPage() {
   // Handle submission for non-admin users
   const handleSubmitRequest = async () => {
     if (!name || !email || !description || !image) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
     if (!termsAccepted || !copyrightAccepted) {
-      toast.error('Please accept the terms and copyright policy');
+      toast.error("Please accept the terms and copyright policy");
       return;
     }
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error('Please enter a valid email address');
+      toast.error("Please enter a valid email address");
       return;
     }
 
     setUploading(true);
-    const loadingToast = toast.loading('Submitting your NFT request...');
+    const loadingToast = toast.loading("Submitting your NFT request...");
 
     try {
       const reader = new FileReader();
@@ -163,11 +166,11 @@ export default function AdminPage() {
         const submissionData = {
           from_name: name,
           from_email: email,
-          nft_name: description.split('\n')[0] || 'Untitled NFT',
+          nft_name: description.split("\n")[0] || "Untitled NFT",
           nft_description: description,
           attributes: JSON.stringify(attributes),
           submission_date: new Date().toLocaleString(),
-          image_preview: base64Image.substring(0, 100) + '...',
+          image_preview: base64Image.substring(0, 100) + "...",
         };
 
         // Send email using EmailJS
@@ -178,10 +181,15 @@ export default function AdminPage() {
         );
 
         if (result.status === 200) {
-          toast.success('Request submitted successfully!', { id: loadingToast });
-          toast.success('Admin will review your submission and contact you via email', {
-            duration: 5000,
+          toast.success("Request submitted successfully!", {
+            id: loadingToast,
           });
+          toast.success(
+            "Admin will review your submission and contact you via email",
+            {
+              duration: 5000,
+            }
+          );
 
           // OPTIONAL UI: store local pending submission (so admin can see it in Submissions tab)
           setPendingSubmissions((prev) => [
@@ -189,11 +197,11 @@ export default function AdminPage() {
               id: `${Date.now()}`,
               name,
               email,
-              nftName: description.split('\n')[0] || 'Untitled NFT',
+              nftName: description.split("\n")[0] || "Untitled NFT",
               description,
-              imageUrl: imagePreview || '',
+              imageUrl: imagePreview || "",
               attributes,
-              status: 'pending',
+              status: "pending",
               submittedAt: new Date(),
               termsAccepted,
             },
@@ -201,11 +209,11 @@ export default function AdminPage() {
           ]);
 
           // Reset form
-          setName('');
-          setEmail('');
-          setDescription('');
+          setName("");
+          setEmail("");
+          setDescription("");
           setImage(null);
-          setImagePreview('');
+          setImagePreview("");
           setAttributes([]);
           setTermsAccepted(false);
           setCopyrightAccepted(false);
@@ -214,8 +222,10 @@ export default function AdminPage() {
 
       reader.readAsDataURL(image);
     } catch (error: any) {
-      console.error('Submission error:', error);
-      toast.error('Failed to submit request. Please try again.', { id: loadingToast });
+      console.error("Submission error:", error);
+      toast.error("Failed to submit request. Please try again.", {
+        id: loadingToast,
+      });
     } finally {
       setUploading(false);
     }
@@ -224,50 +234,50 @@ export default function AdminPage() {
   // Handle mint NFT (Admin only)
   const handleMintNFT = async () => {
     if (!address || !isConnected || !isAdmin) {
-      toast.error('Only admin can mint NFTs');
+      toast.error("Only admin can mint NFTs");
       return;
     }
 
     if (!description || !image) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
     setUploading(true);
-    const loadingToast = toast.loading('Uploading to IPFS...');
+    const loadingToast = toast.loading("Uploading to IPFS...");
 
     try {
       // 1. Upload image to IPFS
       const imageHash = await uploadImageToPinata(image);
-      toast.success('Image uploaded to IPFS!');
+      toast.success("Image uploaded to IPFS!");
 
       // 2. Create metadata
       const metadata = {
-        name: description.split('\n')[0] || 'NFT',
+        name: description.split("\n")[0] || "NFT",
         description,
         image: `ipfs://${imageHash}`,
         attributes: attributes.length > 0 ? attributes : undefined,
       };
 
       // 3. Upload metadata to IPFS
-      toast.loading('Uploading metadata...', { id: loadingToast });
+      toast.loading("Uploading metadata...", { id: loadingToast });
       const metadataHash = await uploadMetadataToPinata(metadata);
-      toast.success('Metadata uploaded!', { id: loadingToast });
+      toast.success("Metadata uploaded!", { id: loadingToast });
 
       // 4. Mint NFT
-      toast.loading('Minting NFT...', { id: loadingToast });
+      toast.loading("Minting NFT...", { id: loadingToast });
       await mint(address, metadataHash);
 
-      toast.success('NFT minted successfully!', { id: loadingToast });
+      toast.success("NFT minted successfully!", { id: loadingToast });
 
       // Reset form
-      setDescription('');
+      setDescription("");
       setImage(null);
-      setImagePreview('');
+      setImagePreview("");
       setAttributes([]);
     } catch (error: any) {
-      console.error('Minting error:', error);
-      toast.error(error.message || 'Failed to mint NFT', { id: loadingToast });
+      console.error("Minting error:", error);
+      toast.error(error.message || "Failed to mint NFT", { id: loadingToast });
     } finally {
       setUploading(false);
     }
@@ -282,7 +292,8 @@ export default function AdminPage() {
           </div>
           <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
           <p className="text-gray-600">
-            Please connect your wallet to access the admin panel or submit your NFT.
+            Please connect your wallet to access the admin panel or submit your
+            NFT.
           </p>
         </Card>
       </div>
@@ -306,7 +317,9 @@ export default function AdminPage() {
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
                     Admin Dashboard
                   </h1>
-                  <p className="text-gray-600">Manage NFT minting and submissions</p>
+                  <p className="text-gray-600">
+                    Manage NFT minting and submissions
+                  </p>
                 </div>
               </>
             ) : (
@@ -318,7 +331,9 @@ export default function AdminPage() {
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
                     Submit Your NFT
                   </h1>
-                  <p className="text-gray-600">Request to mint your digital creation</p>
+                  <p className="text-gray-600">
+                    Request to mint your digital creation
+                  </p>
                 </div>
               </>
             )}
@@ -329,12 +344,16 @@ export default function AdminPage() {
             {isAdmin ? (
               <>
                 <CheckCircle size={18} className="text-green-600" />
-                <span className="text-sm font-medium text-gray-700">Admin Access</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Admin Access
+                </span>
               </>
             ) : (
               <>
                 <UserIcon size={18} className="text-primary-600" />
-                <span className="text-sm font-medium text-gray-700">Public Submission</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Public Submission
+                </span>
               </>
             )}
           </div>
@@ -345,9 +364,11 @@ export default function AdminPage() {
           <Card className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 border-2 border-primary-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-primary-700 mb-1 font-medium">Total NFTs Minted</p>
+                <p className="text-sm text-primary-700 mb-1 font-medium">
+                  Total NFTs Minted
+                </p>
                 <p className="text-3xl font-bold text-primary-900">
-                  {totalSupply?.toString() || '0'}
+                  {totalSupply?.toString() || "0"}
                 </p>
               </div>
               <div className="bg-primary-200 p-3 rounded-xl">
@@ -359,9 +380,11 @@ export default function AdminPage() {
           <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-700 mb-1 font-medium">Marketplace Fee</p>
+                <p className="text-sm text-green-700 mb-1 font-medium">
+                  Marketplace Fee
+                </p>
                 <p className="text-3xl font-bold text-green-900">
-                  {marketplaceFee ? `${Number(marketplaceFee) / 100}%` : '0%'}
+                  {marketplaceFee ? `${Number(marketplaceFee) / 100}%` : "0%"}
                 </p>
               </div>
               <div className="bg-green-200 p-3 rounded-xl">
@@ -374,10 +397,10 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-purple-700 mb-1 font-medium">
-                  {isAdmin ? 'Pending Submissions' : 'Your Status'}
+                  {isAdmin ? "Pending Submissions" : "Your Status"}
                 </p>
                 <p className="text-3xl font-bold text-purple-900">
-                  {isAdmin ? `${pendingSubmissions.length}` : 'Active'}
+                  {isAdmin ? `${pendingSubmissions.length}` : "Active"}
                 </p>
               </div>
               <div className="bg-purple-200 p-3 rounded-xl">
@@ -391,22 +414,22 @@ export default function AdminPage() {
         {isAdmin && (
           <div className="flex gap-4 mb-8 bg-white rounded-xl p-2 shadow-md border border-gray-200">
             <button
-              onClick={() => setActiveTab('mint')}
+              onClick={() => setActiveTab("mint")}
               className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                activeTab === 'mint'
-                  ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-100'
+                activeTab === "mint"
+                  ? "bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-100"
               }`}
             >
               <Zap size={20} />
               Mint NFT
             </button>
             <button
-              onClick={() => setActiveTab('submissions')}
+              onClick={() => setActiveTab("submissions")}
               className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                activeTab === 'submissions'
-                  ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-100'
+                activeTab === "submissions"
+                  ? "bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-100"
               }`}
             >
               <Mail size={20} />
@@ -421,7 +444,7 @@ export default function AdminPage() {
         )}
 
         {/* Content */}
-        {activeTab === 'mint' || !isAdmin ? (
+        {activeTab === "mint" || !isAdmin ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Form */}
             <Card className="p-8 shadow-xl border-2 border-gray-100">
@@ -429,7 +452,7 @@ export default function AdminPage() {
                 <div className="bg-gradient-to-br from-primary-500 to-purple-600 p-2 rounded-lg">
                   <ImagePlus className="text-white" size={24} />
                 </div>
-                {isAdmin ? 'Mint New NFT' : 'Submit Your NFT'}
+                {isAdmin ? "Mint New NFT" : "Submit Your NFT"}
               </h2>
 
               <div className="space-y-6">
@@ -441,7 +464,9 @@ export default function AdminPage() {
                       type="text"
                       placeholder="John Doe"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setName(e.target.value)
+                      }
                     />
 
                     <Input
@@ -449,7 +474,9 @@ export default function AdminPage() {
                       type="email"
                       placeholder="john@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setEmail(e.target.value)
+                      }
                     />
                   </>
                 )}
@@ -457,7 +484,8 @@ export default function AdminPage() {
                 {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    NFT Image * <span className="text-gray-500 text-xs">(Max 10MB)</span>
+                    NFT Image *{" "}
+                    <span className="text-gray-500 text-xs">(Max 10MB)</span>
                   </label>
                   <div className="border-3 border-dashed border-primary-300 rounded-2xl p-8 text-center hover:border-primary-500 hover:bg-primary-50 transition-all cursor-pointer group">
                     <input
@@ -470,7 +498,12 @@ export default function AdminPage() {
                     <label htmlFor="image-upload" className="cursor-pointer">
                       {imagePreview ? (
                         <div className="relative w-full aspect-square max-w-xs mx-auto rounded-xl overflow-hidden shadow-lg">
-                          <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                          <Image
+                            src={imagePreview}
+                            alt="Preview"
+                            fill
+                            className="object-cover"
+                          />
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
                             <Upload
                               className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -483,8 +516,12 @@ export default function AdminPage() {
                           <div className="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                             <Upload className="text-primary-600" size={32} />
                           </div>
-                          <p className="text-gray-700 font-medium mb-1">Click to upload image</p>
-                          <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                          <p className="text-gray-700 font-medium mb-1">
+                            Click to upload image
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            PNG, JPG, GIF up to 10MB
+                          </p>
                         </div>
                       )}
                     </label>
@@ -515,18 +552,28 @@ export default function AdminPage() {
                     <Input
                       placeholder="Trait (e.g., Rarity)"
                       value={currentAttribute.trait_type}
-                      onChange={(e) =>
-                        setCurrentAttribute({ ...currentAttribute, trait_type: e.target.value })
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setCurrentAttribute({
+                          ...currentAttribute,
+                          trait_type: e.target.value,
+                        })
                       }
                     />
                     <Input
                       placeholder="Value (e.g., Legendary)"
                       value={currentAttribute.value}
-                      onChange={(e) =>
-                        setCurrentAttribute({ ...currentAttribute, value: e.target.value })
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setCurrentAttribute({
+                          ...currentAttribute,
+                          value: e.target.value,
+                        })
                       }
                     />
-                    <Button onClick={addAttribute} size="sm" className="flex-shrink-0">
+                    <Button
+                      onClick={addAttribute}
+                      size="sm"
+                      className="flex-shrink-0"
+                    >
                       <Plus size={20} />
                     </Button>
                   </div>
@@ -539,7 +586,9 @@ export default function AdminPage() {
                           className="flex items-center justify-between bg-gradient-to-r from-primary-50 to-purple-50 p-4 rounded-xl border border-primary-200"
                         >
                           <span className="text-sm font-medium">
-                            <strong className="text-primary-700">{attr.trait_type}:</strong>{' '}
+                            <strong className="text-primary-700">
+                              {attr.trait_type}:
+                            </strong>{" "}
                             <span className="text-gray-700">{attr.value}</span>
                           </span>
                           <button
@@ -565,7 +614,7 @@ export default function AdminPage() {
                         className="mt-1 w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                       />
                       <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                        I agree to the{' '}
+                        I agree to the{" "}
                         <button
                           type="button"
                           onClick={() => setShowTermsModal(true)}
@@ -584,8 +633,8 @@ export default function AdminPage() {
                         className="mt-1 w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                       />
                       <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                        I certify that I own the copyright to this content and have the right to mint
-                        it as an NFT
+                        I certify that I own the copyright to this content and
+                        have the right to mint it as an NFT
                       </span>
                     </label>
                   </div>
@@ -609,9 +658,9 @@ export default function AdminPage() {
                   }
                 >
                   {uploading ? (
-                    'Processing...'
+                    "Processing..."
                   ) : isConfirming ? (
-                    'Minting...'
+                    "Minting..."
                   ) : isAdmin ? (
                     <>
                       <Zap size={20} />
@@ -637,16 +686,21 @@ export default function AdminPage() {
                 </h3>
                 <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl aspect-square mb-4 flex items-center justify-center overflow-hidden relative">
                   {imagePreview ? (
-                    <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
                   ) : (
                     <ImagePlus className="text-gray-400" size={80} />
                   )}
                 </div>
                 <h4 className="font-bold text-lg mb-2">
-                  {description.split('\n')[0] || 'NFT Name'}
+                  {description.split("\n")[0] || "NFT Name"}
                 </h4>
                 <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-                  {description || 'NFT description will appear here...'}
+                  {description || "NFT description will appear here..."}
                 </p>
                 {attributes.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -666,29 +720,48 @@ export default function AdminPage() {
               <Card className="p-6 bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 border-2 border-primary-200 shadow-xl">
                 <h3 className="text-lg font-bold mb-4 text-primary-900 flex items-center gap-2">
                   <AlertCircle size={20} />
-                  {isAdmin ? 'Minting Guidelines' : 'Submission Guidelines'}
+                  {isAdmin ? "Minting Guidelines" : "Submission Guidelines"}
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-700">
                   <li className="flex items-start gap-3">
-                    <CheckCircle size={18} className="text-primary-600 flex-shrink-0 mt-0.5" />
-                    <span>High quality images recommended (min 1000x1000px)</span>
+                    <CheckCircle
+                      size={18}
+                      className="text-primary-600 flex-shrink-0 mt-0.5"
+                    />
+                    <span>
+                      High quality images recommended (min 1000x1000px)
+                    </span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle size={18} className="text-primary-600 flex-shrink-0 mt-0.5" />
+                    <CheckCircle
+                      size={18}
+                      className="text-primary-600 flex-shrink-0 mt-0.5"
+                    />
                     <span>Write a clear and compelling description</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle size={18} className="text-primary-600 flex-shrink-0 mt-0.5" />
-                    <span>Add relevant attributes for better discoverability</span>
+                    <CheckCircle
+                      size={18}
+                      className="text-primary-600 flex-shrink-0 mt-0.5"
+                    />
+                    <span>
+                      Add relevant attributes for better discoverability
+                    </span>
                   </li>
                   {!isAdmin && (
                     <>
                       <li className="flex items-start gap-3">
-                        <Clock size={18} className="text-purple-600 flex-shrink-0 mt-0.5" />
+                        <Clock
+                          size={18}
+                          className="text-purple-600 flex-shrink-0 mt-0.5"
+                        />
                         <span>Review typically takes 24-48 hours</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <Mail size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                        <Mail
+                          size={18}
+                          className="text-blue-600 flex-shrink-0 mt-0.5"
+                        />
                         <span>You'll receive an email with the decision</span>
                       </li>
                     </>
@@ -700,13 +773,19 @@ export default function AdminPage() {
               {!isAdmin && (
                 <Card className="p-6 bg-amber-50 border-2 border-amber-200">
                   <div className="flex gap-3">
-                    <Shield size={24} className="text-amber-600 flex-shrink-0" />
+                    <Shield
+                      size={24}
+                      className="text-amber-600 flex-shrink-0"
+                    />
                     <div>
-                      <h4 className="font-bold text-amber-900 mb-2">Copyright Notice</h4>
+                      <h4 className="font-bold text-amber-900 mb-2">
+                        Copyright Notice
+                      </h4>
                       <p className="text-sm text-amber-800">
-                        By submitting, you confirm that you own all rights to this content or have
-                        permission to mint it as an NFT. Fraudulent submissions will be rejected and
-                        may result in account suspension.
+                        By submitting, you confirm that you own all rights to
+                        this content or have permission to mint it as an NFT.
+                        Fraudulent submissions will be rejected and may result
+                        in account suspension.
                       </p>
                     </div>
                   </div>
@@ -727,7 +806,10 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-4">
                 {pendingSubmissions.map((submission) => (
-                  <Card key={submission.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <Card
+                    key={submission.id}
+                    className="p-6 hover:shadow-lg transition-shadow"
+                  >
                     <div className="flex flex-col lg:flex-row gap-6">
                       {/* Left: Preview */}
                       <div className="w-full lg:w-64">
@@ -748,19 +830,19 @@ export default function AdminPage() {
                           <div className="absolute top-3 left-3">
                             <span
                               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
-                                submission.status === 'pending'
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                  : submission.status === 'approved'
-                                  ? 'bg-green-50 text-green-800 border-green-200'
-                                  : 'bg-red-50 text-red-800 border-red-200'
+                                submission.status === "pending"
+                                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                                  : submission.status === "approved"
+                                  ? "bg-green-50 text-green-800 border-green-200"
+                                  : "bg-red-50 text-red-800 border-red-200"
                               }`}
                             >
-                              {submission.status === 'pending' ? (
+                              {submission.status === "pending" ? (
                                 <>
                                   <Loader2 className="animate-spin" size={14} />
                                   Pending
                                 </>
-                              ) : submission.status === 'approved' ? (
+                              ) : submission.status === "approved" ? (
                                 <>
                                   <CheckCircle size={14} />
                                   Approved
@@ -802,7 +884,9 @@ export default function AdminPage() {
                                 <Clock size={14} />
                                 {submission.submittedAt instanceof Date
                                   ? submission.submittedAt.toLocaleString()
-                                  : new Date(submission.submittedAt).toLocaleString()}
+                                  : new Date(
+                                      submission.submittedAt
+                                    ).toLocaleString()}
                               </span>
 
                               {!submission.termsAccepted && (
@@ -820,13 +904,15 @@ export default function AdminPage() {
                               onClick={async () => {
                                 setPendingSubmissions((prev) =>
                                   prev.map((s) =>
-                                    s.id === submission.id ? { ...s, status: 'approved' } : s
+                                    s.id === submission.id
+                                      ? { ...s, status: "approved" }
+                                      : s
                                   )
                                 );
-                                toast.success('Submission approved');
+                                toast.success("Submission approved");
                               }}
                               className="whitespace-nowrap"
-                              disabled={submission.status !== 'pending'}
+                              disabled={submission.status !== "pending"}
                             >
                               <CheckCircle size={18} />
                               Approve
@@ -837,13 +923,15 @@ export default function AdminPage() {
                               onClick={async () => {
                                 setPendingSubmissions((prev) =>
                                   prev.map((s) =>
-                                    s.id === submission.id ? { ...s, status: 'rejected' } : s
+                                    s.id === submission.id
+                                      ? { ...s, status: "rejected" }
+                                      : s
                                   )
                                 );
-                                toast('Submission rejected', { icon: '🛑' });
+                                toast("Submission rejected", { icon: "🛑" });
                               }}
                               className="whitespace-nowrap"
-                              disabled={submission.status !== 'pending'}
+                              disabled={submission.status !== "pending"}
                             >
                               <X size={18} />
                               Reject
@@ -853,7 +941,7 @@ export default function AdminPage() {
                               variant="secondary"
                               onClick={() => {
                                 navigator.clipboard.writeText(submission.email);
-                                toast.success('Email copied');
+                                toast.success("Email copied");
                               }}
                               className="whitespace-nowrap"
                             >
@@ -866,14 +954,18 @@ export default function AdminPage() {
                         {/* Attributes */}
                         {submission.attributes?.length > 0 && (
                           <div className="mt-4">
-                            <p className="text-sm font-semibold text-gray-800 mb-2">Attributes</p>
+                            <p className="text-sm font-semibold text-gray-800 mb-2">
+                              Attributes
+                            </p>
                             <div className="flex flex-wrap gap-2">
                               {submission.attributes.map((a, idx) => (
                                 <span
                                   key={idx}
                                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-50 to-purple-50 border border-primary-200 px-3 py-1 text-xs font-medium text-gray-800"
                                 >
-                                  <span className="text-primary-700">{a.trait_type}:</span>
+                                  <span className="text-primary-700">
+                                    {a.trait_type}:
+                                  </span>
                                   <span>{a.value}</span>
                                 </span>
                               ))}
@@ -893,7 +985,8 @@ export default function AdminPage() {
                                   Quick mint from this submission
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  Prefills the Mint form (image is preview only).
+                                  Prefills the Mint form (image is preview
+                                  only).
                                 </p>
                               </div>
                             </div>
@@ -901,11 +994,15 @@ export default function AdminPage() {
                             <Button
                               variant="secondary"
                               onClick={() => {
-                                setActiveTab('mint');
-                                setDescription(submission.description || submission.nftName);
+                                setActiveTab("mint");
+                                setDescription(
+                                  submission.description || submission.nftName
+                                );
                                 setAttributes(submission.attributes || []);
-                                setImagePreview(submission.imageUrl || '');
-                                toast.success('Prefilled mint form (image is preview only)');
+                                setImagePreview(submission.imageUrl || "");
+                                toast.success(
+                                  "Prefilled mint form (image is preview only)"
+                                );
                               }}
                               className="whitespace-nowrap"
                             >
@@ -944,7 +1041,9 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900">Terms of Service</h3>
-                  <p className="text-xs text-gray-600">Please read before submitting</p>
+                  <p className="text-xs text-gray-600">
+                    Please read before submitting
+                  </p>
                 </div>
               </div>
 
@@ -960,42 +1059,52 @@ export default function AdminPage() {
 
             <div className="max-h-[60vh] overflow-y-auto p-6 space-y-4 text-sm text-gray-700">
               <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                <p className="font-medium text-gray-900 mb-2">1) Ownership & Rights</p>
+                <p className="font-medium text-gray-900 mb-2">
+                  1) Ownership & Rights
+                </p>
                 <p>
-                  You confirm you own the content or have permission to mint it as an NFT. Submissions
-                  that infringe IP/copyright will be rejected.
+                  You confirm you own the content or have permission to mint it
+                  as an NFT. Submissions that infringe IP/copyright will be
+                  rejected.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                <p className="font-medium text-gray-900 mb-2">2) Review Process</p>
+                <p className="font-medium text-gray-900 mb-2">
+                  2) Review Process
+                </p>
                 <p>
-                  Submissions are reviewed by admins. Approval is not guaranteed. You may be contacted
-                  via email for clarifications.
+                  Submissions are reviewed by admins. Approval is not
+                  guaranteed. You may be contacted via email for clarifications.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                <p className="font-medium text-gray-900 mb-2">3) Content Guidelines</p>
+                <p className="font-medium text-gray-900 mb-2">
+                  3) Content Guidelines
+                </p>
                 <p>
-                  No illegal content, impersonation, stolen artwork, or hateful/harassing material.
-                  Admins may reject submissions that violate platform policies.
+                  No illegal content, impersonation, stolen artwork, or
+                  hateful/harassing material. Admins may reject submissions that
+                  violate platform policies.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                <p className="font-medium text-gray-900 mb-2">4) Fees & Marketplace</p>
+                <p className="font-medium text-gray-900 mb-2">
+                  4) Fees & Marketplace
+                </p>
                 <p>
-                  Marketplace fees may apply. Fees shown on the dashboard are subject to change via
-                  contract settings.
+                  Marketplace fees may apply. Fees shown on the dashboard are
+                  subject to change via contract settings.
                 </p>
               </div>
 
               <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                 <AlertCircle className="text-amber-700 mt-0.5" size={18} />
                 <p className="text-amber-900">
-                  This is a template Terms section for UI. Replace with your legal text before
-                  production.
+                  This is a template Terms section for UI. Replace with your
+                  legal text before production.
                 </p>
               </div>
             </div>
@@ -1012,7 +1121,7 @@ export default function AdminPage() {
                 onClick={() => {
                   setTermsAccepted(true);
                   setShowTermsModal(false);
-                  toast.success('Terms accepted');
+                  toast.success("Terms accepted");
                 }}
                 className="w-full sm:w-auto"
               >
@@ -1032,7 +1141,8 @@ export default function AdminPage() {
               <div className="flex-1">
                 <p className="font-semibold text-green-900">Mint successful</p>
                 <p className="text-sm text-green-800">
-                  Your NFT has been minted. You can mint another one or switch to the Submissions tab.
+                  Your NFT has been minted. You can mint another one or switch
+                  to the Submissions tab.
                 </p>
               </div>
               <button

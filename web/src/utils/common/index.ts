@@ -1,4 +1,5 @@
-// formatAddress.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /**
  * Shortens a wallet address for UI display.
@@ -62,4 +63,9 @@ export function formatPrice(
   const formatted = num.toFixed(decimals).replace(/\.?0+$/, "");
 
   return `${formatted} ${symbol}`;
+}
+
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }

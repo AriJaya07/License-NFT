@@ -8,12 +8,18 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   containerClassName?: string;
 };
 
-export default function Input({
+interface CustomLabelProps {
+  htmlFor: string;
+  children: React.ReactNode;
+}
+
+
+export const Input = ({
   label,
   containerClassName = "",
   id,
   ...props
-}: InputProps) {
+}: InputProps) => {
   const autoId = React.useId();
   const inputId = id ?? autoId;
 
@@ -48,4 +54,24 @@ export default function Input({
       />
     </div>
   );
+};
+
+export const CustomLabel = ({ htmlFor, children }: CustomLabelProps) => {
+  return <label htmlFor={htmlFor}>{children}</label>;
+};
+
+interface BadgeProps {
+  className?: string;
+  children: React.ReactNode;
 }
+
+export const Badge= ({ className, children }: BadgeProps) => {
+  return (
+    <span
+      className={`inline-block px-4 py-2 text-sm font-medium rounded-full border ${className}`}
+      style={{ display: 'inline-block', maxWidth: 'fit-content' }}
+    >
+      {children}
+    </span>
+  );
+};
